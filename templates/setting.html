@@ -96,7 +96,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
     <script>
         function search(){
-            $.get("/search?name=product", function(data, status){
+            $.get("/search", function(data, status){
                 for (var i = 0; i < data['products'].length; i++){
                     cur = data['products'][i]
                     html = "<tr id='"+cur['id']+"'><th>"+(i+1)+"</th><td>"+cur['product_title']+"</td><td>"+cur['currency']+" "+cur['product_price']+"</td><td>"+cur['currency']+" "+cur['previous_price']+"</td><td><a class='btn btn-primary btn-sm' href='"+cur['url']+"'>Link</a></td><td><button type='button' class='btn btn-danger btn-sm delete'>Delete</button></td></tr>"
@@ -106,7 +106,7 @@
                     let wantdelete = confirm("Really want to delete this product?");
 
                     if (wantdelete == true){
-                        remove($(this).parent().parent().attr('id'))
+                        remove_track($(this).parent().parent().attr('id'))
                     }
                 });
             });
@@ -115,14 +115,14 @@
             });
 
         }
-        function add(url){
+        function add_track(url){
             $.ajax({
                 method: "POST",
-                url: "/add",
+                url: "/add_track",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                data: JSON.stringify({"type":'url',"data":url}),
+                data: JSON.stringify({"url":url}),
                 success: function (response){
                     alert(response)
                     location.reload();
@@ -130,14 +130,14 @@
             })
         }
 
-        function remove(id){
+        function remove_track(id){
             $.ajax({
                 method: "POST",
-                url: "/remove",
+                url: "/remove_track",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                data: JSON.stringify({"type":'product',"data":id}),
+                data: JSON.stringify({"id":id}),
                 success: function (response){
                     location.reload();
                 }
@@ -149,7 +149,7 @@
                 $("#track").addClass("disabled")
                 $("#track").html("Tracking...")
                 if ($("#link").val() != ""){
-                    add($("#link").val())
+                    add_track($("#link").val())
                 }
                 else{
                     alert("Cannot be empty")

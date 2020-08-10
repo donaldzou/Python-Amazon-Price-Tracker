@@ -5,6 +5,39 @@ import requests
 import threading
 from flask import Flask, request, render_template
 import time
+from datetime import datetime
+import email
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def send_email(address,content):
+    reciever = address
+    msg = MIMEMultipart("alternative")
+    msg['From'] = "Amamzon Price Tracker"
+    msg['To'] = reciever
+    msg['Subject'] = "Price Dropped!"
+
+    data = ""
+    for i in content:
+        for key in i.keys():
+            if key == 'URL':
+                # data += "<p style='font-family: sans-serif; font-size: 10px; font-weight: normal; margin: 0; margin-bottom: 5px;'>"+key+"</p>"
+                data += "<a style='background-color:#29b6f6; color:white; font-size:16px; text-align:center; padding: .375rem .75rem; width:100vw; border-radius:10px; text-decoration:none' href='"+i[key]+"'>Click to view product</a>"
+            else:
+                data += "<p style='font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 5px;'>"+key+"</p>"
+                data += "<p style='font-family: sans-serif; font-size: 20px; font-weight: 800; margin: 0; margin-bottom: 15px;'>"+i[key]+"</p> "
+    html = "<html><head><meta name='viewport' content='width=device-width'> <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'> <title>Simple Transactional Email</title> <style> /* ------------------------------------- INLINED WITH htmlemail.io/inline ------------------------------------- */ /* ------------------------------------- RESPONSIVE AND MOBILE FRIENDLY STYLES ------------------------------------- */ @media only screen and (max-width: 620px) { table[class=body] h1 { font-size: 28px !important; margin-bottom: 10px !important; } table[class=body] p, table[class=body] ul, table[class=body] ol, table[class=body] td, table[class=body] span, table[class=body] a { font-size: 16px !important; } table[class=body] .wrapper, table[class=body] .article { padding: 10px !important; } table[class=body] .content { padding: 0 !important; } table[class=body] .container { padding: 0 !important; width: 100% !important; } table[class=body] .main { border-left-width: 0 !important; border-radius: 0 !important; border-right-width: 0 !important; } table[class=body] .btn table { width: 100% !important; } table[class=body] .btn a { width: 100% !important; } table[class=body] .img-responsive { height: auto !important; max-width: 100% !important; width: auto !important; } } /* ------------------------------------- PRESERVE THESE STYLES IN THE HEAD ------------------------------------- */ @media all { .ExternalClass { width: 100%; } .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; } .apple-link a { color: inherit !important; font-family: inherit !important; font-size: inherit !important; font-weight: inherit !important; line-height: inherit !important; text-decoration: none !important; } #MessageViewBody a { color: inherit; text-decoration: none; font-size: inherit; font-family: inherit; font-weight: inherit; line-height: inherit; } .btn-primary table td:hover { background-color: #34495e !important; } .btn-primary a:hover { background-color: #34495e !important; border-color: #34495e !important; } } </style></head><body class='' style='background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;'> <table border='0' cellpadding='0' cellspacing='0' class='body' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; background-color: #f6f6f6;'> <tbody> <tr> <td style='font-family: sans-serif; font-size: 14px; vertical-align: top;'>&nbsp;</td> <td class='container' style='font-family: sans-serif; font-size: 14px; vertical-align: top; display: block; Margin: 0 auto; max-width: 580px; padding: 10px; width: 580px;'> <div class='content' style='box-sizing: border-box; display: block; margin: 2rem; max-width: 580px; padding: 20px; background-color: white;'> <!-- START CENTERED WHITE CONTAINER --> "+data+"<div class='footer' style='clear: both; Margin-top: 10px; text-align: center; width: 100%;'> <table border='0' cellpadding='0' cellspacing='0' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;'> </table> </div> <!-- END FOOTER --> <!-- END CENTERED WHITE CONTAINER --> </div> </td> <td style='font-family: sans-serif; font-size: 14px; vertical-align: top;'>&nbsp;</td> </tr> </tbody> </table></body></html>"
+    part2 = MIMEText(html, "html")
+    msg.attach(part2)
+    s = smtplib.SMTP("smtp.office365.com", 587)
+    s.ehlo()
+    s.starttls()
+    s.ehlo()
+    s.login('wolframdiscordbot@outlook.com', 'Jimolkio0')
+    s.sendmail("wolframdiscordbot@outlook.com", reciever, msg.as_string())
+    s.quit()
+    print('Email Sent to '+address)
 
 
 def get_product(url):
@@ -44,8 +77,33 @@ def check_amazon():
             if current_price - new_price > 0:
                 price_drop = current_price - new_price
                 user_db.update({'product_price':str(new_price), 'previous_price':str(current_price)}, search.id == a['id'])
-        print("Checking product")
-        time.sleep(180)
+                send = user_db.search(search.id == a['id'])
+                
+                send_data = [{
+                    "Product Title": send[0]['product_title'],
+                    "Price": send[0]['currency']+" "+send[0]['product_price'],
+                    "Price Before": send[0]['currency']+" "+send[0]['previous_price'],
+                    "URL":send[0]['url']
+                }]
+                email_list = TinyDB("json/email.json")
+                email_user = email_list.all()
+                for i in email_user:
+                    send_email(i['email'], send_data)
+
+
+                # send_email('donaldzou@live.hk',send_data)
+
+        now = datetime.now()
+        current_time = now.strftime("%Y-%m-%d %H:%M:%S")
+        set_db = TinyDB("json/setting.json")
+        set_search = Query()
+        set_db.update({'content':str(current_time)}, set_search.title == "time")
+        print("Product Checked on - "+str(current_time))
+        
+
+        result = set_db.search(set_search.title == "sleep_time")
+        sleep_time = result[0]['content']
+        time.sleep(sleep_time)
         
                 
 
@@ -58,44 +116,83 @@ app = Flask("Python Amazon Price Tracker")
 def index():
     return render_template('index.html')
 
+@app.route('/email',methods=['GET'])
+def email():
+    return render_template('email.html')
+
+@app.route('/setting',methods=['GET'])
+def setting():
+    return render_template('setting.html')
+
+
 @app.route('/search', methods=['GET'])
 def search():
-    user_db = TinyDB('json/product.json')
+    name = request.args.get('name')
+    user_db = TinyDB('json/'+name+'.json')
     products = user_db.all()
-    result = {'products':[]}
-    for i in products:
-        result['products'].append(i)
+    if name == 'product':
+        result = {'products':[]}
+        for i in products:
+            result['products'].append(i)
+    else:
+        result = {'email':[]}
+        for i in products:
+            result['email'].append(i)
     return result
 
-@app.route('/add_track', methods=['POST'])
-def add_track():
-    url = request.get_json()
-    user_product = TinyDB("json/product.json")
-    while True:
-        status = True
-        try:
-            product = get_product(url['url'])
-        except Exception:
-            status = False
-            pass
-        if status:
-            break
-    product_search = Query()
-    find_product = user_product.search(product_search.id == product['id'])
-    if find_product == []:
-        user_product.insert(product)
-        return "Product Saved."
-    else:
-        return "You've already added this product."
+@app.route('/get_time', methods=['GET'])
+def get_time():
+    set_db = TinyDB("json/setting.json")
+    set_search = Query()
+    result = set_db.search(set_search.title == "time")
+    update_time = result[0]['content']
+    return {'data':update_time}
+
+@app.route('/add', methods=['POST'])
+def add():
+    data = request.get_json()
+    if data['type'] == 'url':
+        user_product = TinyDB("json/product.json")
+        while True:
+            status = True
+            try:
+                product = get_product(data['data'])
+            except Exception:
+                status = False
+                pass
+            if status:
+                break
+        product_search = Query()
+        find_product = user_product.search(product_search.id == product['id'])
+        if find_product == []:
+            user_product.insert(product)
+            return "Product Saved."
+        else:
+            return "You've already added this product."
+    elif data['type'] == 'email':
+        user_email = TinyDB("json/email.json")
+        email_search = Query()
+        find_email = user_email.search(email_search.email == data['data'])
+        if find_email == []:
+            user_email.insert({"email":data['data']})
+            return "Email Saved."
+        else:
+            return "Email already exist."
 
 
-@app.route('/remove_track', methods=['POST'])
-def remove_track():
-    url = request.get_json()
-    user_product = TinyDB("json/product.json")
-    product_search = Query()
-    user_product.remove(product_search.id == url['id'])
-    return "Product Deleted."
+@app.route('/remove', methods=['POST'])
+def remove():
+    data = request.get_json()
+    if data['type'] == 'product':
+        user_product = TinyDB("json/product.json")
+        product_search = Query()
+        user_product.remove(product_search.id == data['data'])
+        return "Product Deleted."
+    elif data['type'] == 'email':
+        user_product = TinyDB("json/email.json")
+        product_search = Query()
+        user_product.remove(product_search.email == data['data'])
+        return "Email Deleted."
 
 threading.Thread(target=check_amazon).start()
 app.run(host='0.0.0.0',debug=False, port=10086)
