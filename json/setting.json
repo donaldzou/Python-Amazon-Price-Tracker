@@ -1,1 +1,1 @@
-{"_default": {"1": {"title": "time", "content": "2020-08-10 22:46:44", "description": "Update Time", "edit": "false"}, "2": {"title": "sleep_time", "content": "180", "description": "Tracker Sleep Time", "edit": "true", "sleep_time": "10000"}}}
+{"_default": {"1": {"title": "time", "content": "2020-08-11 02:55:20", "description": "Update Time", "edit": "false"}, "2": {"title": "sleep_time", "content": "10", "description": "Tracker Sleep Time", "edit": "true", "sleep_time": "5000"}}}

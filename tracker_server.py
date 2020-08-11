@@ -10,6 +10,7 @@ import email
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import uuid 
 
 # Configure your Email
 email_address = "example@example.com"
@@ -101,12 +102,16 @@ def check_amazon():
                     "Product Title": send[0]['product_title'],
                     "Price": send[0]['currency']+" "+send[0]['product_price'],
                     "Price Before": send[0]['currency']+" "+send[0]['previous_price'],
-                    "URL":send[0]['url']
+                    "URL":send[0]['url'],
+                    'id':str(uuid.uuid1())
                 }]
+                notification_list = TinyDB("json/notification.json")
+                notification_list.insert(send_data[0])
+
                 email_list = TinyDB("json/email.json")
                 email_user = email_list.all()
-                for i in email_user:
-                    send_email(i['email'], send_data)
+                # for i in email_user:
+                #     send_email(i['email'], send_data)
 
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -145,10 +150,16 @@ def search():
     name = request.args.get('name')
     user_db = TinyDB('json/'+name+'.json')
     products = user_db.all()
+    notification = TinyDB('json/notification.json')
+    notification_list = notification.all()
+    noti_search = Query()
     if name == 'product':
-        result = {'products':[]}
+        result = {'products':[],'notification':[]}
         for i in products:
             result['products'].append(i)
+        for i in notification_list:
+            result['notification'].append(i)
+            notification.remove(noti_search.URL == i['URL'])
     else:
         result = {'email':[]}
         for i in products:
