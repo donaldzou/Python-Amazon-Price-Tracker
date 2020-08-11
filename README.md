@@ -9,8 +9,8 @@ This is a Python Flask App that could track the price of Amazon products! It cou
 - Beautiful Soup 4
 
 # Install & Run
-**You must have the 3 libraries from above installed on to your computer**
 1. Clone this git
-2. Run tracker.py
-3. Do not close the python and access with your browser to localhost:10086
-4. Happy tracking!
+2. Run ```python3 -m pip install -r requirements.txt```
+3. After finishing install dependencies, run ```python3 tracker_server.py```
+4. Accese the server with ```http://127.0.0.1:10086```
+5. Happy tracking!
