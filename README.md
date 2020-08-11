@@ -1,5 +1,5 @@
 # Python Amazon Price Tracker
-This is a Python Flask App that could track the price of Amazon products! It could work with any Amazon site (.cn, .jp, .com...). Frontend is powered by jQuery and Bootstrap.
+This is a Python Flask App that could track the price of Amazon products! It could work with any Amazon site (.cn, .jp, .com...). Frontend is powered by jQuery and Bootstrap. When there is a price drop, you will recieve an email.
 
 ![Example Image](https://github.com/donaldzou/Python-Amazon-Price-Tracker/raw/master/templates/example.png)
 
