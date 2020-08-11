@@ -20,7 +20,3 @@ This is a Python Flask App that could track the price of Amazon products! It cou
 3. After finishing install dependencies, run ```python3 tracker_server.py```
 4. Accese the server with ```http://127.0.0.1:10086```
 5. Happy tracking!
-
-# Configure Email
-- In the ```tracker_server.py```, you need to input your email detail to recive email notification.
-- This program is using SMTP, check with your email provider for further details.
