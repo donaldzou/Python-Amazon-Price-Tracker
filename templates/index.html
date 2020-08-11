@@ -86,6 +86,23 @@
                 
             </div>
         </div>
+        
+        <div class="modal fade" id="alert_modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Add Product To Track</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </body>
 
 
@@ -97,6 +114,7 @@
     <script>
         function search(){
             $.get("/search?name=product", function(data, status){
+                $("tbody").html('')
                 for (var i = 0; i < data['products'].length; i++){
                     cur = data['products'][i]
                     html = "<tr id='"+cur['id']+"'><th>"+(i+1)+"</th><td>"+cur['product_title']+"</td><td>"+cur['currency']+" "+cur['product_price']+"</td><td>"+cur['currency']+" "+cur['previous_price']+"</td><td><a class='btn btn-primary btn-sm' href='"+cur['url']+"'>Link</a></td><td><button type='button' class='btn btn-danger btn-sm delete'>Delete</button></td></tr>"
@@ -110,7 +128,8 @@
                     }
                 });
             });
-            $.get("/get_time", function(data, status){
+            $.get("/get_setting?setting=time", function(data, status){
+                $("#update_time").html("Updated at: ")
                 $("#update_time").append(data['data'])
             });
 
@@ -124,8 +143,15 @@
                 },
                 data: JSON.stringify({"type":'url',"data":url}),
                 success: function (response){
-                    alert(response)
-                    location.reload();
+                    $('#alert_modal').modal('show')
+                    $(".modal-body").html(response)
+                    $('#alert_modal').on('hidden.bs.modal', function (e) {
+                        search();
+                        $("#link").val("")
+                        $("#track").removeClass("disabled")
+                        $("#track").html("Track")
+                    });
+
                 }
             })
         }
@@ -139,7 +165,7 @@
                 },
                 data: JSON.stringify({"type":'product',"data":id}),
                 success: function (response){
-                    location.reload();
+                    search()
                 }
             })
         }
@@ -147,7 +173,7 @@
             search();
             $("#track").click(function(){
                 $("#track").addClass("disabled")
-                $("#track").html("Tracking...")
+                $("#track").html('Tracking...<div class="spinner-grow spinner-grow-sm" role="status"><span class="sr-only">Loading...</span></div>')
                 if ($("#link").val() != ""){
                     add($("#link").val())
                 }
@@ -155,6 +181,15 @@
                     alert("Cannot be empty")
                 }
             });
+
+            $.get("/get_setting?setting=sleep_time", function(data, status){
+                setInterval(function(){
+                    search()
+                },parseInt(data['data'])*1000)
+                console.log("Timer start with "+parseInt(data['data'])*1000)
+            });
+
+            
         })
         
 

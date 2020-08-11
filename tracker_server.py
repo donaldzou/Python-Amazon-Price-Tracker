@@ -41,11 +41,22 @@ def send_email(address,content):
 
 
 def get_product(url):
-    headers = {'User-Agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",'Cookie': ''}
+    headers = {
+        'User-Agent':"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36 OPR/69.0.3686.77",
+        'Cookie': '',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'Accept-Encoding':'gzip, deflate, br',
+        'Connection':'keep-alive'
+    }
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.content, "html.parser")
     product_title = soup.find(id='productTitle').text.replace('\n','')
-    price_str = soup.findAll("span","a-size-medium a-color-price")[0].text
+    medium = soup.findAll("span","a-size-medium a-color-price")
+    base = soup.findAll("span","a-size-base a-color-price")
+    try:
+        price_str = soup.findAll("span","a-size-medium a-color-price")[0].text
+    except Exception:
+        price_str = soup.findAll("span","a-size-base a-color-price")[0].text
     price = ""
     currency = ""
     for i in price_str:
@@ -90,9 +101,6 @@ def check_amazon():
                 for i in email_user:
                     send_email(i['email'], send_data)
 
-
-                # send_email('donaldzou@live.hk',send_data)
-
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
         set_db = TinyDB("json/setting.json")
@@ -103,7 +111,7 @@ def check_amazon():
 
         result = set_db.search(set_search.title == "sleep_time")
         sleep_time = result[0]['content']
-        time.sleep(sleep_time)
+        time.sleep(int(sleep_time))
         
                 
 
@@ -140,17 +148,36 @@ def search():
             result['email'].append(i)
     return result
 
-@app.route('/get_time', methods=['GET'])
-def get_time():
+@app.route('/get_setting', methods=['GET'])
+def get_setting():
     set_db = TinyDB("json/setting.json")
     set_search = Query()
-    result = set_db.search(set_search.title == "time")
-    update_time = result[0]['content']
-    return {'data':update_time}
+    name = request.args.get('setting')
+   
+    if name != None:
+        result = set_db.search(set_search.title == name)
+        update_time = result[0]['content']
+        return {'data':update_time}
+    else:
+        return {"all_setting":set_db.all()}
+
+@app.route('/save_setting', methods=['POST'])
+def save_setting():
+    set_db = TinyDB("json/setting.json")
+    set_search = Query()
+    data = request.get_json()
+    for i in data.keys():
+        print(i)
+        print(data[i])
+        set_db.update({'content':data[i]}, set_search.title == i)
+    return "Saved"
+
+
 
 @app.route('/add', methods=['POST'])
 def add():
     data = request.get_json()
+
     if data['type'] == 'url':
         user_product = TinyDB("json/product.json")
         while True:
@@ -166,9 +193,9 @@ def add():
         find_product = user_product.search(product_search.id == product['id'])
         if find_product == []:
             user_product.insert(product)
-            return "Product Saved."
+            return "Tracking "+product['product_title']
         else:
-            return "You've already added this product."
+            return product['product_title']+" is already in your tracking list."
     elif data['type'] == 'email':
         user_email = TinyDB("json/email.json")
         email_search = Query()

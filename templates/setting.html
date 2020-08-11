@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Python Amazon Price Tracker</title>
+        <title>Python Amazon Price Tracker - Settings</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
         <style>
@@ -12,7 +12,6 @@
                 padding-bottom: 5vh;
                 background-color: #242d35!important;
                 color:white;
-                text-align:center
             }
             .table-div{
                 background-color: #242d35!important;
@@ -34,57 +33,36 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item active">
+                    <li class="nav-item">
                         <a class="nav-link" href="/">Home<span class="sr-only">(current)</span></a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/email">Email List</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item active">
                         <a class="nav-link" href="/setting">Setting</a>
                     </li>
                 </ul>
             </div>
         </nav>
-
+        
         <div class='search-bar'>
             <div class='container'>
-                <h1>Paste an Amazon link to track ;)</h1>
-                <h6 style="padding-bottom: 30px;">(Any Amazon site could work)</h6>
-                <div class='row'>
-                    <div class="col-sm-10">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="link">
-                        </div>
-                    </div>
-                    <div class="col-sm-2">
-                        <button id='track' type="button" class="btn btn-warning" style="width:100%">Track</button>
-                    </div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Settings Saved!</strong>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                
+                <h1 style="padding-bottom: 20px;">Settings</h1>
+                <div id="setting">
+
+                </div>
+                <!-- <div class='row'><div class="col-sm-2"><p>Tracker Sleep Time (In Seconds)</p></div><div class="col-sm-10"><div class="form-group"><input type="text" class="form-control" id="sleep_time" placeholder="Tracker Sleep Time"></div></div></div> -->
+                <hr>
+                <button id='save' type="button" class="btn btn-warning" style="width:100%">Save</button>
             </div>
         </div>
-        <div class='table-div'>
-            <div class='container'>
-                <p id="update_time" style='text-align: center;'>Updated at: </p>
-                <div class='table-responsive'>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Product Name</th>
-                                <th scope="col">Current Price</th>
-                                <th scope="col">Last Price</th>
-                                <th scope="col">Link</th>
-                                <th scope="col">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
-                
-            </div>
         </div>
     </body>
 
@@ -95,69 +73,49 @@
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
     <script>
-        function search(){
-            $.get("/search", function(data, status){
-                for (var i = 0; i < data['products'].length; i++){
-                    cur = data['products'][i]
-                    html = "<tr id='"+cur['id']+"'><th>"+(i+1)+"</th><td>"+cur['product_title']+"</td><td>"+cur['currency']+" "+cur['product_price']+"</td><td>"+cur['currency']+" "+cur['previous_price']+"</td><td><a class='btn btn-primary btn-sm' href='"+cur['url']+"'>Link</a></td><td><button type='button' class='btn btn-danger btn-sm delete'>Delete</button></td></tr>"
-                    $("tbody").append(html)
+        function get_setting(){
+            $.get("/get_setting", function(data, status){
+                $("#setting").html("")
+                for (var i = 0; i < data['all_setting'].length; i++){
+                    cur = data['all_setting'][i]
+                    html = ""
+                    html += '<div class="row"><div class="col-sm-2"><p>'+cur['description']+'</p></div>'
+                    if (data['all_setting'][i]['edit'] == "true"){
+                        html += '<div class="col-sm-10"><div class="form-group"><input type="text" class="form-control" id="'+cur['title']+'" placeholder="Tracker Sleep Time" value="'+cur['content']+'"></div></div></div>'
+                    }
+                    else{
+                        html += '<div class="col-sm-10"><p>'+cur['content']+'</p></div></div>'
+                    }
+                    $("#setting").append(html)
                 }
-                $(".delete").on('click',function(){
-                    let wantdelete = confirm("Really want to delete this product?");
+            });
+        }
 
-                    if (wantdelete == true){
-                        remove_track($(this).parent().parent().attr('id'))
+
+
+        $(document).ready(function(){
+            $(".alert").hide()
+            get_setting();
+            $("#save").click(function(){
+                settings = {}
+                $("#setting :input").each(function(){
+                    settings[$(this).attr('id')] = $(this).val()
+                })
+                $.ajax({
+                    method: "POST",
+                    url: "/save_setting",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    data: JSON.stringify(settings),
+                    success: function (response){
+                        $(".alert").show()
+                        get_setting();
                     }
                 });
-            });
-            $.get("/get_time", function(data, status){
-                $("#update_time").append(data['data'])
-            });
-
-        }
-        function add_track(url){
-            $.ajax({
-                method: "POST",
-                url: "/add_track",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                data: JSON.stringify({"url":url}),
-                success: function (response){
-                    alert(response)
-                    location.reload();
-                }
             })
-        }
 
-        function remove_track(id){
-            $.ajax({
-                method: "POST",
-                url: "/remove_track",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                data: JSON.stringify({"id":id}),
-                success: function (response){
-                    location.reload();
-                }
-            })
-        }
-        $(document).ready(function(){
-            search();
-            $("#track").click(function(){
-                $("#track").addClass("disabled")
-                $("#track").html("Tracking...")
-                if ($("#link").val() != ""){
-                    add_track($("#link").val())
-                }
-                else{
-                    alert("Cannot be empty")
-                }
-            });
         })
-        
-
-        
+   
     </script>
 </html>
