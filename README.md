@@ -10,11 +10,11 @@ This is a Python Flask App that could track the price of Amazon products! It cou
 ![Notification Image](https://github.com/donaldzou/Python-Amazon-Price-Tracker/raw/master/templates/notification.png)
 
 # Dependencies
-- **Python
-  - Python TinyDB
+- **Python**
+  - TinyDB
   - Flask
   - Beautiful Soup 4
-- **Front End
+- **Front End**
   - jQuery
   - Bootstrap
   - Push.js
